@@ -11,35 +11,63 @@
 
 #define FSL_FASTBOOT_FB_DEV "mmc"
 
-#ifdef CONFIG_SYS_MALLOC_LEN
-#undef CONFIG_SYS_MALLOC_LEN
-#define CONFIG_SYS_MALLOC_LEN           (64 * SZ_1M)
-#endif
-
 #define CONFIG_SERIAL_TAG
 
 #undef CONFIG_EXTRA_ENV_SETTINGS
 #undef CONFIG_BOOTCOMMAND
 
+#define KERNEL_ENV_SETTINGS \
+	"kernelargs=" \
+
+#define ANDROID_ENV_SETTINGS \
+	"kernelbootargs=" \
+		"if test ${board_name} = VAR-SOM-MX8M-MINI; then " \
+			"setenv console ${console}; " \
+			"setenv hardware_variant ${board_name}; " \
+			"setenv androidconsole ttymxc3; " \
+			"setenv som_ver ${som_rev}; " \
+			"if test ${som_rev} -ge 2; then " \
+				"setenv wifi_args 'moal.mod_para=wifi_mod_para_iw612.conf'; " \
+			"fi; " \
+		"else " \
+			"setenv console ${console}; " \
+			"setenv hardware_variant ${board_name}; " \
+			"setenv androidconsole ttymxc0; " \
+			"setenv som_ver ${som_rev}; " \
+			"if test ${som_rev} -ge 2; then " \
+				"setenv wifi_args 'moal.mod_para=wifi_mod_para_iw612.conf'; " \
+			"fi; " \
+		"fi; " \
+		"setenv bootargs console=${console} ${bootargs} " \
+				"${wifi_args} androidboot.console=${androidconsole} " \
+				"androidboot.hardware_variant=${hardware_variant} " \
+				"androidboot.som_ver=${som_ver}; \0"
+
+
 #define BOOT_ENV_SETTINGS \
 	"bootcmd=" \
+		"run kernelbootargs; " \
 		"bootmcu; boota ${fastboot_dev}\0"
 
-#define CONFIG_EXTRA_ENV_SETTINGS		\
+#define CFG_EXTRA_ENV_SETTINGS		\
+	ANDROID_ENV_SETTINGS  \
 	BOOT_ENV_SETTINGS \
 	"splashpos=m,m\0"			\
 	"fdt_high=0xffffffffffffffff\0"		\
 	"initrd_high=0xffffffffffffffff\0"	\
+	"console=ttymxc0,115200\0" \
+	"emmc_dev=2\0"\
+	"sd_dev=1\0" \
 	"bootargs=" \
 		"init=/init " \
-		"androidboot.hardware=nxp " \
 		"cma=800M@0x400M-0xb80M " \
 		"firmware_class.path=/vendor/firmware " \
-		"fw_devlink.strict=0 " \
 		"loop.max_part=7 " \
 		"bootconfig " \
 		"androidboot.vendor.sysrq=1 " \
-		"transparent_hugepage=never\0"
+		"transparent_hugepage=never " \
+		"androidboot.lcd_density=160 " \
+		"androidboot.hardware=nxp\0"
 
 /* Enable mcu firmware flash */
 #ifdef CONFIG_FLASH_MCUFIRMWARE_SUPPORT
@@ -50,7 +78,7 @@
 #define ANDROID_MCU_FIRMWARE_HEADER_STACK 0x20020000
 #endif
 
-#define CONFIG_SYS_SPL_PTE_RAM_BASE    0x41580000
+#define CFG_SYS_SPL_PTE_RAM_BASE    0x41580000
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 #define BOOTLOADER_RBIDX_OFFSET  0x3FE000
@@ -59,7 +87,6 @@
 #define BOOTLOADER_RBIDX_INITVAL 0
 #endif
 
-#endif
 
 #ifdef CONFIG_IMX_TRUSTY_OS
 #define AVB_RPMB
@@ -67,19 +94,6 @@
 #define KEYSLOT_BLKS             0x1FFF
 #define NS_ARCH_ARM64 1
 
-#endif
-
-/* Enable CONFIG_IMX8M_1G_MEMORY  to config 1GB ddr */
-#ifdef CONFIG_IMX8M_1G_MEMORY
-#undef  PHYS_SDRAM_SIZE
-#define PHYS_SDRAM_SIZE 0x40000000 /* 1GB DDR */
-#endif
-
-#ifdef CONFIG_IMX8M_4G_LPDDR4
-#undef PHYS_SDRAM_SIZE
-#define PHYS_SDRAM_SIZE          0xC0000000 /* 3GB */
-#define PHYS_SDRAM_2             0x100000000
-#define PHYS_SDRAM_2_SIZE        0x40000000 /* 1GB */
 #endif
 
 #endif /*__MX8MM_VAR_DART_ANDROID_H */
